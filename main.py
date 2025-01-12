@@ -1,106 +1,105 @@
-import math
-import numpy as np
+import argparse
 import os
+from time import perf_counter
+
+from entities.Graph import Graph
+from heuristics.NearestNeighbor import NearestNeighbor
+from metaheuristics.Grasph import Grasph
 
 
-class Graph:
+def main():
+    # Configuração dos argumentos de linha de comando
+    args = parse_arguments()
 
-    def __init__(self, name, comment, problem_type, dimension, edge_weight_type, capacity, node_list, node_demand):
-        self.name = name
-        self.comment = comment
-        self.problem_type = problem_type
-        self.dimension = int(dimension)
-        self.edge_weight_type = edge_weight_type
-        self.capacity = capacity
-        self.node_list = node_list
-        self.node_demand = node_demand
-        self.depot_node = 0
-        self.graph = np.zeros((self.dimension, self.dimension))
-        self.arcs = int((dimension * dimension - dimension) / 2)
+    # Processa os argumentos do método
+    parameters = process_method_parameters(args.method)
 
-        for i in range(self.dimension):
-            for j in range(self.dimension):
-                self.graph[i, j] = Graph.euclidean_2d_calc(self.node_list[i], self.node_list[j])
+    # Carrega o grafo do arquivo de entrada
+    graph = load_graph(args.instance_file)
 
-    def __str__(self):
-        s = (f'NAME: {self.name}\nCOMMENT: {self.comment}\nTYPE: {self.problem_type}\nDIMENSION: {self.dimension}'
-             f'\nEDGE_WEIGHT_TYPE: {self.edge_weight_type}\nCAPACITY: {self.capacity}\nARCS: {self.arcs}\n')
+    # Define o arquivo de saída
+    output_file = args.instance_file + ".result"
 
-        s += '\nNODE_COORD_SECTION\n'
+    # Executa o método selecionado
+    objective_function, run_time = run_method(graph, parameters)
 
-        for node in self.node_list:
-            s += f'Node {node[0]}: ({node[1]}, {node[2]})\n'
+    # Escreve os resultados no arquivo de saída
+    write_results(args.instance_file, args.method, graph, objective_function, run_time, output_file)
 
-        s += '\nDEMAND_SECTION\n'
 
-        for node in self.node_demand:
-            s += f'Node {node[0]}: {node[1]}\n'
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Solucionador CVRP usando heurísticas e metaheurísticas")
+    parser.add_argument("instance_file", type=str, help="Arquivo de instância CVRP")
+    parser.add_argument("method", type=str, help="Método a ser utilizado (ex: GRASP-100-0.3)")
+    return parser.parse_args()
 
-        return s
 
-    @staticmethod
-    def load_graph(file_path):
-        node_list, node_demand = [], []
+def process_method_parameters(method_string):
+    """
+    Processa a string do método para extrair os parâmetros
+    Exemplo: 'GRASP-100-0.3' retorna ('GRASP', 100, 0.3)
+    """
+    parts = method_string.split('-')
+    if len(parts) == 3 and parts[0] == 'GRASP':
+        return {
+            'type': 'GRASP',
+            'max_iter': int(parts[1]),
+            'alpha': float(parts[2])
+        }
+    return {
+        'type': method_string
+    }
 
-        with open(file_path, 'r') as f:
-            lines = f.readlines()
-            read_coord, read_demand = False, False
 
-            for line in lines:
-                line = line.strip()  # Remove espaços em branco
+def run_method(graph, parameters):
+    """
+    Executa o método especificado com os parâmetros fornecidos
+    """
+    begin = perf_counter()
 
-                if not read_coord and not read_demand:
-                    if line.startswith("NAME"):
-                        name = line.split(":")[1].strip()  # Nome do arquivo/problema
-                    elif line.startswith("COMMENT"):
-                        comment = line.split("COMMENT :")[1].strip()  # Comentário do arquivo/problema
-                    elif line.startswith("TYPE"):
-                        problem_type = line.split(":")[1].strip()  # Tipo de problema
-                    elif line.startswith("DIMENSION"):
-                        dimension = int(line.split(":")[1].strip())  # Número de nós (dimensão)
-                    elif line.startswith("EDGE_WEIGHT_TYPE"):
-                        edge_weight_type = line.split(":")[1].strip()  # Tipo de distância (EUC_2D)
-                    elif line.startswith("CAPACITY"):
-                        capacity = line.split(":")[1].strip()
-                    elif line == "NODE_COORD_SECTION":
-                        read_coord = True
-                elif line == "DEMAND_SECTION":
-                    read_coord, read_demand = False, True
-                elif line == "EOF":
-                    break  # Fim do arquivo
+    method_type = parameters['type']
 
-                if read_coord:
-                    # A linha contém as coordenadas (id, x, y)
-                    parts = line.split()
-                    if len(parts) == 3:
-                        node_id = int(parts[0])  # ID do nó
-                        x = float(parts[1])  # Coordenada x
-                        y = float(parts[2])  # Coordenada y
-                        node_list.append((node_id, x, y))  # Armazena o nó
+    if method_type == 'GRASP':
+        grasp_solver = Grasph(
+            graph,
+            alpha=parameters['alpha'],
+            max_iter=parameters['max_iter'],
+            start_node=graph.depot  # Usa o ID do depósito
+        )
+        best_tour, best_cost = grasp_solver.run()
+        objective_function = best_cost
+    else:
+        # Método padrão (pode ser adaptado conforme necessário)
+        nn_solver = NearestNeighbor(graph)
+        solution = nn_solver.run()
+        objective_function = solution.cost
 
-                if read_demand:
-                    # A linha contém as demandas de cada nó
-                    parts = line.split()
-                    if len(parts) == 2:
-                        node_id = int(parts[0])
-                        demand = int(parts[1])
-                        node_demand.append((node_id, demand))
+    end = perf_counter()
+    run_time = end - begin
+    return objective_function, run_time
 
-        return Graph(name, comment, problem_type, dimension, edge_weight_type, capacity, node_list, node_demand)
 
-    @staticmethod
-    def euclidean_2d_calc(node1, node2):
-        # Cálculo da distância euclidiana
-        x = node1[1] - node2[1]
-        y = node1[2] - node2[2]
-        return math.sqrt(x * x + y * y)
+def load_graph(instance_file):
+    folder = 'files/instances/'
+    return Graph.load_graph(folder + instance_file)
+
+
+def write_results(instance_file, method, graph, objective_function, run_time, output_file):
+    file_exists = os.path.exists(output_file) and os.path.getsize(output_file) > 0
+
+    if not file_exists:
+        with open(output_file, 'a') as f:
+            f.write(
+                f"{'INSTANCE': <20}{'METHOD': <15}{'OBJECTIVE': <15}{'RUNTIME': <15}"
+                f"{'DIMENSION': <10}{'CAPACITY': <10}\n"
+            )
+
+    with open(output_file, 'a') as f:
+        f.write(
+            f"{instance_file: <20}{method: <15}{objective_function: <15.2f}"
+            f"{run_time: <15.3f}{graph.dimension: <10}{graph.capacity: <10}\n"
+        )
 
 
 if __name__ == '__main__':
-
-    folder = 'files/instances'
-    file_list = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith('.vrp')]
-
-    for arquivo in file_list:
-        graph = Graph.load_graph(arquivo)
-        print(graph)
+    main()
