@@ -94,7 +94,7 @@ class Graph:
 
     @staticmethod
     def load_optimal_solution(file_path):
-        routes, new_route = [], []
+        routes = []
         with open(file_path, 'r') as f:
             lines = f.readlines()
             for line in lines:
@@ -102,6 +102,7 @@ class Graph:
                     cost = line.split()[1].strip()
                 elif line.startswith("Route"):
                     route = line.split(":")[1].split()
+                    new_route = []
                     for i in range(len(route)):
                         new_route.append(int(route[i]))
                     routes.append(new_route)
@@ -112,6 +113,18 @@ class Graph:
         x = node1[1] - node2[1]
         y = node1[2] - node2[2]
         return math.sqrt(x * x + y * y)
+
+    def calculate_distance(self):
+        total_distance = 0.0
+
+        for i in range(len(self.optimal_routes)):
+            route = self.optimal_routes[i]
+            total_distance += self.graph[self.depot - 1][route[0]]
+            for j in range(len(self.optimal_routes[i]) - 1):
+                total_distance += self.graph[route[j]][route[j + 1]]
+            total_distance += self.graph[route[-1]][self.depot - 1]
+
+        return total_distance
 
     def get_demand(self, node_id):
         """Retorna a demanda para um determinado nó"""
@@ -145,4 +158,4 @@ if __name__ == '__main__':
     for file in file_list:
         graph = Graph.load_graph(file)
 
-        print(graph.name, graph.problem_type, graph.optimal_solution)
+        print(graph.name, graph.problem_type, graph.optimal_solution, graph.calculate_distance())
