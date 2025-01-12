@@ -1,9 +1,12 @@
 import math
 import numpy as np
+import os
+import re
 
 
 class Graph:
-    def __init__(self, name, comment, problem_type, dimension, edge_weight_type, capacity, node_list, demands, depot):
+    def __init__(self, name, comment, problem_type, dimension, edge_weight_type, capacity, node_list, demands,
+                 depot, file_solution):
         self.name = name
         self.comment = comment
         self.problem_type = problem_type
@@ -15,7 +18,8 @@ class Graph:
         self.depot = depot
         self.graph = np.zeros((self.dimension, self.dimension))
         self.arcs = int((dimension * dimension - dimension) / 2)
-        self.optimal_solution = 0.0
+        self.vehicles = re.search(r'k(\d+)', name)[1]
+        self.optimal_solution, self.optimal_routes = Graph.load_optimal_solution(file_solution)
 
         # Calcula a matriz de distâncias
         for i in range(self.dimension):
@@ -86,7 +90,22 @@ class Graph:
                             depot = depot_id
 
         return Graph(name, comment, problem_type, dimension, edge_weight_type,
-                     capacity, node_list, demands, depot)
+                     capacity, node_list, demands, depot, '../files/optimal_solutions/' + name + '.sol')
+
+    @staticmethod
+    def load_optimal_solution(file_path):
+        routes, new_route = [], []
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith("Cost"):
+                    cost = line.split()[1].strip()
+                elif line.startswith("Route"):
+                    route = line.split(":")[1].split()
+                    for i in range(len(route)):
+                        new_route.append(int(route[i]))
+                    routes.append(new_route)
+        return cost, routes
 
     @staticmethod
     def euclidean_2d_calc(node1, node2):
@@ -110,9 +129,20 @@ class Graph:
         """Calcula a demanda total para uma rota específica"""
         return sum(self.demands[node] for node in route if node in self.demands)
 
-    def getDeposito(self):
+    def get_deposito(self):
         """Retorna as coordenadas do nó depósito"""
         for node in self.node_list:
             if node[0] == self.depot:
-                return (node[1], node[2])  # Retorna as coordenadas x, y do depósito
+                return node[1], node[2]  # Retorna as coordenadas x, y do depósito
         return None
+
+
+if __name__ == '__main__':
+
+    folder = '../files/instances/'
+    file_list = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith('.vrp')]
+
+    for file in file_list:
+        graph = Graph.load_graph(file)
+
+        print(graph.name, graph.problem_type, graph.optimal_solution)
