@@ -1,4 +1,6 @@
 import math
+import re
+
 import numpy as np
 
 
@@ -16,6 +18,7 @@ class Graph:
         self.graph = np.zeros((self.dimension, self.dimension))
         self.arcs = int((dimension * dimension - dimension) / 2)
         self.optimal_solution = 0.0
+        self.vehicles = int(re.search(r'k(\d+)', name)[1])
 
         # Calcula a matriz de distâncias
         for i in range(self.dimension):

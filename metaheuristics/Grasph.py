@@ -13,6 +13,7 @@ class Grasph:
         self.best_cost = float('inf')
         self.vehicle_capacity = graph.capacity
         self.demands = graph.demands
+        self.max_vehicles = graph.vehicles
 
     def split_into_routes(self, solution):
         routes = []
