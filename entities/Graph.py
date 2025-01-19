@@ -12,7 +12,7 @@ class Graph:
         self.capacity = int(capacity)
         self.node_list = node_list
         self.demands = demands
-        self.depot = depot
+        self.depot = depot - 1
         self.graph = np.zeros((self.dimension, self.dimension))
         self.arcs = int((dimension * dimension - dimension) / 2)
         self.optimal_solution = 0.0
@@ -92,7 +92,7 @@ class Graph:
     def euclidean_2d_calc(node1, node2):
         x = node1[1] - node2[1]
         y = node1[2] - node2[2]
-        return math.sqrt(x * x + y * y)
+        return round(math.sqrt(x * x + y * y))
 
     def get_demand(self, node_id):
         """Retorna a demanda para um determinado nó"""
@@ -109,10 +109,3 @@ class Graph:
     def get_route_demand(self, route):
         """Calcula a demanda total para uma rota específica"""
         return sum(self.demands[node] for node in route if node in self.demands)
-
-    def getDeposito(self):
-        """Retorna as coordenadas do nó depósito"""
-        for node in self.node_list:
-            if node[0] == self.depot:
-                return (node[1], node[2])  # Retorna as coordenadas x, y do depósito
-        return None

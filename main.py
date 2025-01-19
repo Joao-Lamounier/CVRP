@@ -41,21 +41,6 @@ def process_method_parameters(method_string):
     }
 
 
-def run_method(graph, parameters):
-    begin = perf_counter()
-    method_type = parameters['type']
-
-    if method_type == 'GRASP':
-        grasp_solver = Grasph(
-            graph,
-            alpha=parameters['alpha'],
-            max_iter=parameters['max_iter'],
-            start_node=graph.getDeposito()
-        )
-        best_routes, best_cost = grasp_solver.run()
-        return best_routes, best_cost, perf_counter() - begin
-
-
 def load_graph(instance_file):
     folder = 'files/instances/'
     return Graph.load_graph(folder + instance_file)
@@ -64,7 +49,7 @@ def load_graph(instance_file):
 def write_results(instance_file, method, graph, routes, objective_function, run_time, output_file):
     with open(output_file, 'w') as f:
         for i, route in enumerate(routes, 1):
-            route_str = ' '.join(str(node) for node in route[1:])
+            route_str = ' '.join(str(node) for node in route)
             f.write(f"Route #{i}: {route_str}\n")
         f.write(f"Cost {int(objective_function)}:\n")
 
@@ -92,7 +77,7 @@ def run_method(graph, parameters):
             graph,
             alpha=parameters['alpha'],
             max_iter=parameters['max_iter'],
-            start_node=1  # Depot
+            start_node = graph.depot
         )
         routes, cost = grasp_solver.run()
         run_time = perf_counter() - begin
