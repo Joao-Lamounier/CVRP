@@ -5,6 +5,7 @@ from time import perf_counter
 from entities.Graph import Graph
 from metaheuristics.Grasph import Grasph
 
+
 def main():
     args = parse_arguments()
     parameters = process_method_parameters(args.method)
@@ -15,15 +16,19 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     output_file = f"{output_dir}/result.txt"
 
+    optimal_cost = load_optimal_cost(args.instance_file)
+
     routes, objective_function, run_time = run_method(graph, parameters)
     write_results(output_dir, args.instance_file, args.method, graph, routes,
-                  objective_function, run_time, output_file)
+                  objective_function, run_time, output_file, optimal_cost)
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Solucionador CVRP usando heurísticas e metaheurísticas")
     parser.add_argument("instance_file", type=str, help="Arquivo de instância CVRP")
     parser.add_argument("method", type=str, help="Método a ser utilizado (ex: GRASP-100-0.3)")
     return parser.parse_args()
+
 
 def process_method_parameters(method_string):
     """
@@ -41,11 +46,29 @@ def process_method_parameters(method_string):
         'type': method_string
     }
 
+
 def load_graph(instance_file):
     folder = 'files/instances/'
     return Graph.load_graph(folder + instance_file)
 
-def write_results(output_dir, instance_file, method, graph, routes, objective_function, run_time, output_file):
+
+def load_optimal_cost(instance_file):
+    """
+    Carrega o valor ótimo da função a partir do arquivo correspondente.
+    """
+    instance_name = os.path.splitext(instance_file)[0]  # Remove a extensão .vrp
+    optimal_file = f"files/optimal_solutions/{instance_name}.sol"
+    if os.path.exists(optimal_file):
+        with open(optimal_file, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith("Cost"):
+                    return int(line.split()[1])
+    return None
+
+
+def write_results(output_dir, instance_file, method, graph, routes, objective_function, run_time, output_file,
+                  optimal_cost):
     with open(output_file, 'w') as f:
         for i, route in enumerate(routes, 1):
             route_str = ' '.join(str(node) for node in route)
@@ -59,12 +82,18 @@ def write_results(output_dir, instance_file, method, graph, routes, objective_fu
         if not file_exists:
             f.write(
                 f"{'INSTANCE': <20}{'METHOD': <15}{'OBJECTIVE': <15}{'RUNTIME': <15}"
-                f"{'DIMENSION': <10}{'CAPACITY': <10}\n"
+                f"{'DIMENSION': <10}{'CAPACITY': <10}{'GAP': <10}\n"
             )
         f.write(
             f"{instance_file: <20}{method: <15}{objective_function: <15.2f}"
-            f"{run_time: <15.3f}{graph.dimension: <10}{graph.capacity: <10}\n"
+            f"{run_time: <15.3f}{graph.dimension: <10}{graph.capacity: <10}"
+            f"{gap(objective_function, optimal_cost): <20}\n"
         )
+
+
+def gap(objective_function, optimal_solution):
+    return 100 * ((objective_function - optimal_solution) / optimal_solution)
+
 
 def run_method(graph, parameters):
     begin = perf_counter()
@@ -80,6 +109,7 @@ def run_method(graph, parameters):
         routes, cost = grasp_solver.run()
         run_time = perf_counter() - begin
         return routes, cost, run_time
+
 
 if __name__ == '__main__':
     main()
