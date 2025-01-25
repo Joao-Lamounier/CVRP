@@ -5,24 +5,25 @@ from time import perf_counter
 from entities.Graph import Graph
 from metaheuristics.Grasph import Grasph
 
-
 def main():
     args = parse_arguments()
     parameters = process_method_parameters(args.method)
     graph = load_graph(args.instance_file)
-    output_file = args.instance_file + ".result"
+
+    # Define o diretório de saída
+    output_dir = f"files/results/{args.instance_file}"
+    os.makedirs(output_dir, exist_ok=True)
+    output_file = f"{output_dir}/result.txt"
 
     routes, objective_function, run_time = run_method(graph, parameters)
-    write_results(args.instance_file, args.method, graph, routes,
+    write_results(output_dir, args.instance_file, args.method, graph, routes,
                   objective_function, run_time, output_file)
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Solucionador CVRP usando heurísticas e metaheurísticas")
     parser.add_argument("instance_file", type=str, help="Arquivo de instância CVRP")
     parser.add_argument("method", type=str, help="Método a ser utilizado (ex: GRASP-100-0.3)")
     return parser.parse_args()
-
 
 def process_method_parameters(method_string):
     """
@@ -40,20 +41,18 @@ def process_method_parameters(method_string):
         'type': method_string
     }
 
-
 def load_graph(instance_file):
     folder = 'files/instances/'
     return Graph.load_graph(folder + instance_file)
 
-
-def write_results(instance_file, method, graph, routes, objective_function, run_time, output_file):
+def write_results(output_dir, instance_file, method, graph, routes, objective_function, run_time, output_file):
     with open(output_file, 'w') as f:
         for i, route in enumerate(routes, 1):
             route_str = ' '.join(str(node) for node in route)
             f.write(f"Route #{i}: {route_str}\n")
         f.write(f"Cost {int(objective_function)}:\n")
 
-    stats_file = output_file + ".stats"
+    stats_file = f"{output_dir}/stats.txt"
     file_exists = os.path.exists(stats_file)
 
     with open(stats_file, 'a') as f:
@@ -67,7 +66,6 @@ def write_results(instance_file, method, graph, routes, objective_function, run_
             f"{run_time: <15.3f}{graph.dimension: <10}{graph.capacity: <10}\n"
         )
 
-
 def run_method(graph, parameters):
     begin = perf_counter()
     method_type = parameters['type']
@@ -77,12 +75,11 @@ def run_method(graph, parameters):
             graph,
             alpha=parameters['alpha'],
             max_iter=parameters['max_iter'],
-            start_node = graph.depot
+            start_node=graph.depot
         )
         routes, cost = grasp_solver.run()
         run_time = perf_counter() - begin
         return routes, cost, run_time
-
 
 if __name__ == '__main__':
     main()

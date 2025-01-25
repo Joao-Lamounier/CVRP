@@ -141,6 +141,11 @@ class Grasph:
                     break
                 nodes_used.update(route_nodes)
 
+            # Penalidade por excesso de veículos
+            if len(routes) > self.max_vehicles:
+                excess_vehicles = len(routes) - self.max_vehicles
+                cost += (excess_vehicles ** 2) * 1e5  # Quadrado do excesso * 10^5
+
             if valid and cost < self.best_cost:
                 self.best_routes = routes
                 self.best_cost = cost
