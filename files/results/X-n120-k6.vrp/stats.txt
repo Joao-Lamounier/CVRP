@@ -1,0 +1,2 @@
+INSTANCE            METHOD         OBJECTIVE      RUNTIME        DIMENSION CAPACITY  GAP       
+X-n120-k6.vrp       GRASP-1000-0.7521646.00       9761.762       120       21        62.361236123612365  

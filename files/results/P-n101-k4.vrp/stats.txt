@@ -1,0 +1,4 @@
+INSTANCE            METHOD         OBJECTIVE      RUNTIME        DIMENSION CAPACITY  GAP       
+P-n101-k4.vrp       GRASP-1000-0.751086.00        13118.480      101       400       59.471365638766514  
+P-n101-k4.vrp       GRASP-1000-0.5 1045.00        13554.703      101       400       53.45080763582967   
+P-n101-k4.vrp       GRASP-1000-0.25891.00         13708.152      101       400       30.837004405286343  
