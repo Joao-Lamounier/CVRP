@@ -79,7 +79,7 @@ class Graph:
                         node_list.append((node_id, x, y))
 
                     elif current_section == "demands" and len(parts) == 2:
-                        node_id = int(parts[0])
+                        node_id = int(parts[0]) - 1
                         demand = int(parts[1])
                         demands[node_id] = demand
 
