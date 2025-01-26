@@ -14,11 +14,10 @@ tasks=(
 )
 
 # Lista de valores de alfa
-alphas=(0.125 0.25 0.5 0.75 1)
+alphas=(0.125 0.25)
 
-# Itera sobre as instâncias e os valores de alfa, executando o comando em terminais separados
 for task in "${tasks[@]}"; do
   for alpha in "${alphas[@]}"; do
-    gnome-terminal -- bash -c "python main.py $task GRASP-1000-$alpha; exec bash"
+    gnome-terminal -- bash -c "python main.py $task GRASP-1000-$alpha"
   done
 done
