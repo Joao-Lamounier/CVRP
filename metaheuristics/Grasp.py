@@ -141,5 +141,3 @@ class Grasp:
             if valid and cost < self.objective_function:
                 self.routes = routes
                 self.objective_function = cost
-
-        return self.routes, self.objective_function
