@@ -1,4 +1,5 @@
 class LocalSearch:
+
     def calculate_distance(self, route, distance_matrix):
         total_distance = 0.0
         for i in range(len(route) - 1):

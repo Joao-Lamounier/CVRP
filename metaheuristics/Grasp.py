@@ -1,43 +1,37 @@
 import random
-
 from local_search.ThreeOpt import ThreeOpt
 
 
-class Grasph:
-    def __init__(self, graph, start_node, alpha=0.125, max_iter=1000):
-        self.graph = graph
-        self.depot = start_node
+class Grasp:
+    def __init__(self, cvrp, alpha=0.125, max_iter=1000):
+        self.cvrp = cvrp
+        self.objective_function, self.routes = float('inf'), []
         self.alpha = alpha
         self.max_iter = max_iter
-        self.best_routes = None
-        self.best_cost = float('inf')
-        self.vehicle_capacity = graph.capacity
-        self.demands = graph.demands
-        self.max_vehicles = graph.vehicles
 
     def split_into_routes(self, solution):
         routes = []
-        current_route = [self.depot]
+        current_route = [self.cvrp.depot]
         current_load = 0
 
         for node in solution[1:]:
-            node_demand = self.demands[node]
+            node_demand = self.cvrp.demands[node]
 
-            if current_load + node_demand <= self.vehicle_capacity:
+            if current_load + node_demand <= self.cvrp.vehicle_capacity:
                 current_route.append(node)
                 current_load += node_demand
             else:
-                if current_route[-1] != self.depot:
-                    current_route.append(self.depot)
+                if current_route[-1] != self.cvrp.depot:
+                    current_route.append(self.cvrp.depot)
                 routes.append(current_route)
 
-                # Start new route
-                current_route = [self.depot, node]
+                # Inicia uma nova rota
+                current_route = [self.cvrp.depot, node]
                 current_load = node_demand
 
         if current_route:
-            if current_route[-1] != self.depot:
-                current_route.append(self.depot)
+            if current_route[-1] != self.cvrp.depot:
+                current_route.append(self.cvrp.depot)
             routes.append(current_route)
 
         cleaned_routes = []
@@ -45,29 +39,29 @@ class Grasph:
             cleaned_route = []
             prev_node = None
             for node in route:
-                if node != prev_node or node != self.depot:
+                if node != prev_node or node != self.cvrp.depot:
                     cleaned_route.append(node)
                 prev_node = node
 
-            if cleaned_route[0] != self.depot:
-                cleaned_route.insert(0, self.depot)
-            if cleaned_route[-1] != self.depot:
-                cleaned_route.append(self.depot)
+            if cleaned_route[0] != self.cvrp.depot:
+                cleaned_route.insert(0, self.cvrp.depot)
+            if cleaned_route[-1] != self.cvrp.depot:
+                cleaned_route.append(self.cvrp.depot)
 
             cleaned_routes.append(cleaned_route)
 
         return cleaned_routes
 
     def greedy_randomized_construction(self):
-        unvisited = set(range(1, self.graph.dimension))  # Exclude depot
-        solution = [self.depot]
-        current_node = self.depot
+        unvisited = set(range(1, self.cvrp.dimension))  # Desconsidera o depósito (0)
+        solution = [self.cvrp.depot]
+        current_node = self.cvrp.depot
 
         while unvisited:
             candidates = []
             for node in unvisited:
-                if node not in solution:  # Ensure node hasn't been visited
-                    cost = self.graph.graph[current_node, node]
+                if node not in solution:
+                    cost = self.cvrp.graph[current_node, node]
                     candidates.append((node, cost))
 
             if not candidates:
@@ -92,30 +86,28 @@ class Grasph:
         for route in routes:
             route_cost = 0
             for i in range(len(route) - 1):
-                route_cost += self.graph.graph[route[i], route[i + 1]]
+                route_cost += self.cvrp.graph[route[i], route[i + 1]]
             total_cost += route_cost
         return total_cost
 
     def local_search(self, solution):
         current_routes = self.split_into_routes(solution)
         best_routes = current_routes
-        best_cost = self.calculate_routes_cost(current_routes)
 
         for i in range(len(best_routes)):
             route = best_routes[i]
-            three_opt = ThreeOpt(self.graph.graph, 100, route,
-                                 self.calculate_routes_cost([route]))
+            three_opt = ThreeOpt(self.cvrp.graph, route, self.calculate_routes_cost([route]))
             improved_route, _ = three_opt.solve_three_opt()
 
-            if improved_route[0] != self.depot:
-                improved_route.insert(0, self.depot)
-            if improved_route[-1] != self.depot:
-                improved_route.append(self.depot)
+            if improved_route[0] != self.cvrp.depot:
+                improved_route.insert(0, self.cvrp.depot)
+            if improved_route[-1] != self.cvrp.depot:
+                improved_route.append(self.cvrp.depot)
 
             cleaned_route = []
             prev_node = None
             for node in improved_route:
-                if node != prev_node or node != self.depot:
+                if node != prev_node or node != self.cvrp.depot:
                     cleaned_route.append(node)
                 prev_node = node
 
@@ -123,7 +115,7 @@ class Grasph:
 
         return best_routes, self.calculate_routes_cost(best_routes)
 
-    def run(self):
+    def solve_grasp(self):
         for _ in range(self.max_iter):
             solution = self.greedy_randomized_construction()
             routes, cost = self.local_search(solution)
@@ -131,7 +123,7 @@ class Grasph:
             valid = True
             nodes_used = set()
             for route in routes:
-                if route.count(self.depot) > 2:
+                if route.count(self.cvrp.depot) > 2:
                     valid = False
                     break
 
@@ -141,13 +133,13 @@ class Grasph:
                     break
                 nodes_used.update(route_nodes)
 
-            # Penalidade por excesso de veículos
-            if len(routes) > self.max_vehicles:
-                excess_vehicles = len(routes) - self.max_vehicles
-                cost += (excess_vehicles ** 2) * 1e5  # Quadrado do excesso * 10^5
+            # Penalização: Número de veículos ultrapassados
+            if len(routes) > self.cvrp.max_vehicles:
+                excess_vehicles = len(routes) - self.cvrp.max_vehicles
+                cost += (excess_vehicles ** 2) * 1e5
 
-            if valid and cost < self.best_cost:
-                self.best_routes = routes
-                self.best_cost = cost
+            if valid and cost < self.objective_function:
+                self.routes = routes
+                self.objective_function = cost
 
-        return self.best_routes, self.best_cost
+        return self.routes, self.objective_function

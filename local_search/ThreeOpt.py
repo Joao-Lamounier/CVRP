@@ -2,23 +2,21 @@ from .LocalSearch import LocalSearch
 
 
 class ThreeOpt(LocalSearch):
-    def __init__(self, distance_matrix, run_time, path, objective_function):
+    def __init__(self, distance_matrix, path, objective_function):
         self.distance_matrix = distance_matrix
-        self.run_time = run_time
         self.objective_function = objective_function
         self.path = path
-        self.n = len(path)
+        self.dimension = len(path)
 
     def solve_three_opt(self):
-        route = self.path[:]
-        best_distance = self.objective_function
+        route, best_distance = self.path[:], self.objective_function
         improved = True
 
         while improved:
             improved = False
-            for i in range(self.n - 2):
-                for j in range(i + 1, self.n - 1):
-                    for k in range(j + 1, self.n):
+            for i in range(self.dimension - 2):
+                for j in range(i + 1, self.dimension - 1):
+                    for k in range(j + 1, self.dimension):
                         candidates = [
                             route[:i] + route[i:j][::-1] + route[j:k][::-1] + route[k:],
                             route[:i] + route[j:k][::-1] + route[i:j] + route[k:],

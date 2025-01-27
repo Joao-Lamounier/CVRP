@@ -3,29 +3,27 @@ import random
 
 class GeneticAlgorithm:
 
-    def __init__(self, graph, mutation_rate=0.05, elitism_rate=0.15, num_generations=400):
-        self.graph = graph
-        self.objetive_function = 0.0
-        self.routes = []
-        self.mutation_rate = mutation_rate
-        self.population_size = 500 * (self.graph.dimension - 1)
-        self.num_generations = num_generations
+    def __init__(self, cvrp, elitism_rate, mutation_rate, num_generations):
+        self.cvrp = cvrp
+        self.objective_function, self.routes = float('inf'), []
+        self.population_size = 500 * (self.cvrp.dimension - 1)
         self.elitism_rate = elitism_rate
+        self.mutation_rate = mutation_rate
+        self.num_generations = num_generations
 
     def create_individual(self):
-        clients = list(range(1, self.graph.dimension))
+        clients = list(range(1, self.cvrp.dimension))
         random.shuffle(clients)
         return clients
 
     def decode_individual(self, individual):
-        routes = []
-        route_capacities = {}  # Dicionário para armazenar a capacidade restante de cada rota
+        routes, route_capacities = [], {}
 
         for client in individual:
-            demand = self.graph.demands[client]
+            demand = self.cvrp.demands[client]
             inserted = False
 
-            # Tentar inserir o cliente em uma rota existente
+            # Tentativa: Inserir o cliente numa rota existente
             for i, route in enumerate(routes):
                 if route_capacities[i] >= demand:
                     route.append(client)
@@ -33,10 +31,10 @@ class GeneticAlgorithm:
                     inserted = True
                     break
 
-            # Se o cliente não puder ser inserido em nenhuma rota existente, cria-se uma nova rota
+            # Criação nova rota: Se o cliente não puder ser inserido em nenhuma rota existente
             if not inserted:
                 routes.append([client])
-                route_capacities[len(routes) - 1] = self.graph.capacity - demand  # Capacidade da nova rota
+                route_capacities[len(routes) - 1] = self.cvrp.vehicle_capacity - demand  # Capacidade da nova rota
 
         return routes
 
@@ -46,18 +44,18 @@ class GeneticAlgorithm:
 
         for route in routes:
             route_distance = 0.0
-            previous = self.graph.depot
+            previous = self.cvrp.depot
 
             for client in route:
-                route_distance += self.graph.graph[previous][client]
+                route_distance += self.cvrp.graph[previous][client]
                 previous = client
 
-            route_distance += self.graph.graph[previous][self.graph.depot]
+            route_distance += self.cvrp.graph[previous][self.cvrp.depot]
             total_distance += route_distance
 
-        # Penalização proporcional ao número de veículos ultrapassados
-        if len(routes) > self.graph.vehicles:
-            penalty = (len(routes) - self.graph.vehicles) ** 2 * 1e5
+        # Penalização: Número de veículos ultrapassados
+        if len(routes) > self.cvrp.max_vehicles:
+            penalty = (len(routes) - self.cvrp.max_vehicles) ** 2 * 1e5
             total_distance += penalty
 
         return total_distance
@@ -89,7 +87,7 @@ class GeneticAlgorithm:
             num_elite = int(self.elitism_rate * self.population_size)
             new_population = population[:num_elite]
 
-            # Seleção dos indivíduos para o Crossover
+            # Seleção Crossover: 50% dos melhores indivíduos
             population = [ind for _, ind in fitness_scores[:self.population_size // 2]]
 
             # Geração da nova população
@@ -99,11 +97,9 @@ class GeneticAlgorithm:
                 self.mutate(child)
                 new_population.append(child)
 
-            # print(f'\nGeração: {generation + 1} Melhor Aptidão: {fitness_scores[0][0]}')
-
             # Nova população
             population = new_population
 
         # Melhor indivíduo
-        self.objetive_function, best_individual = fitness_scores[0]
+        self.objective_function, best_individual = fitness_scores[0]
         self.routes = self.decode_individual(best_individual)

@@ -2,9 +2,8 @@ import argparse
 import os
 from time import perf_counter
 
-from entities.Graph import Graph
-from heuristics.NearestNeighbor import NearestNeighbor
-from metaheuristics.Grasph import Grasph
+from entities.CVRP import CVRP
+from metaheuristics.Grasp import Grasp
 
 
 def main():
@@ -16,6 +15,7 @@ def main():
 
     # Carrega o grafo do arquivo de entrada
     graph = load_graph(args.instance_file)
+
 
     # Define o arquivo de saída
     output_file = args.instance_file + ".result"
@@ -52,36 +52,23 @@ def process_method_parameters(method_string):
 
 
 def run_method(graph, parameters):
-    """
-    Executa o método especificado com os parâmetros fornecidos
-    """
-    begin = perf_counter()
-
     method_type = parameters['type']
-
+    best_cost = float('inf')
     if method_type == 'GRASP':
-        grasp_solver = Grasph(
+        grasp_solver = Grasp(
             graph,
             alpha=parameters['alpha'],
             max_iter=parameters['max_iter'],
-            start_node=graph.depot  # Usa o ID do depósito
         )
-        best_tour, best_cost = grasp_solver.run()
-        objective_function = best_cost
-    else:
-        # Método padrão (pode ser adaptado conforme necessário)
-        nn_solver = NearestNeighbor(graph)
-        solution = nn_solver.run()
-        objective_function = solution.cost
+        best_tour, best_cost = grasp_solver.solve_grasp()
 
-    end = perf_counter()
-    run_time = end - begin
-    return objective_function, run_time
+    run_time = 0.0
+    return best_cost, run_time
 
 
 def load_graph(instance_file):
     folder = 'files/instances/'
-    return Graph.load_graph(folder + instance_file)
+    return CVRP.load_graph(folder + instance_file)
 
 
 def write_results(instance_file, method, graph, objective_function, run_time, output_file):
