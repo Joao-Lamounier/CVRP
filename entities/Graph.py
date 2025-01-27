@@ -186,8 +186,6 @@ if __name__ == '__main__':
          'X-n106-k14', 'X-n110-k13'
 ]
 
-    route_teste = [[1, 10, 8, 16, 17, 3, 12, 14, 11, 4], [6, 2, 7, 9, 15, 13, 5, 18]]
-
     for file in file_list:
         graph = Graph.load_graph(file)
         grasp = Grasph(graph, graph.depot)
