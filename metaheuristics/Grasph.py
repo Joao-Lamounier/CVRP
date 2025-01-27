@@ -103,8 +103,7 @@ class Grasph:
 
         for i in range(len(best_routes)):
             route = best_routes[i]
-            three_opt = ThreeOpt(self.graph.graph, 100, route,
-                                 self.calculate_routes_cost([route]))
+            three_opt = ThreeOpt(self.graph.graph, 100, route, self.calculate_routes_cost([route]))
             improved_route, _ = three_opt.solve_three_opt()
 
             if improved_route[0] != self.depot:
@@ -126,6 +125,7 @@ class Grasph:
     def run(self):
         for _ in range(self.max_iter):
             solution = self.greedy_randomized_construction()
+            print(solution)
             routes, cost = self.local_search(solution)
 
             valid = True
@@ -144,7 +144,7 @@ class Grasph:
             # Penalidade por excesso de veículos
             if len(routes) > self.max_vehicles:
                 excess_vehicles = len(routes) - self.max_vehicles
-                cost += (excess_vehicles ** 2) * 1e5  # Quadrado do excesso * 10^5
+                cost += (excess_vehicles ** 2) * 1e5
 
             if valid and cost < self.best_cost:
                 self.best_routes = routes

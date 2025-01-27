@@ -2,9 +2,9 @@ from .LocalSearch import LocalSearch
 
 
 class ThreeOpt(LocalSearch):
-    def __init__(self, distance_matrix, run_time, path, objective_function):
-        self.distance_matrix = distance_matrix
-        self.run_time = run_time
+    def __init__(self, cvrp, path, objective_function):
+        self.cvrp = cvrp
+        self.distance_matrix = cvrp.graph
         self.objective_function = objective_function
         self.path = path
         self.n = len(path)
@@ -31,7 +31,7 @@ class ThreeOpt(LocalSearch):
                         ]
 
                         for new_route in candidates:
-                            new_distance = self.calculate_distance(new_route, self.distance_matrix)
+                            new_distance = self.calculate_distance(self.cvrp, new_route)
                             if new_distance < best_distance:
                                 route = new_route
                                 best_distance = new_distance

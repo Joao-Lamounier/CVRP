@@ -5,7 +5,7 @@ import re
 from time import perf_counter
 
 # from metaheuristics.GeneticAlgorithm import GeneticAlgorithm
-from metaheuristics.Grasph import Grasph
+from metaheuristics.Grasp import Grasp
 
 
 class Graph:
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
     for file in file_list:
         graph = Graph.load_graph(file)
-        grasp = Grasph(graph, graph.depot)
+        grasp = Grasp(graph, graph.depot)
 
         if graph.name in nomes: # graph.optimal_solution == graph.calculate_fitness(graph.optimal_routes) and graph.name not in ['P-n55-k15', 'X-n101-k25', 'X-n125-k30', 'X-n148-k46'] and graph.name in artigo_instancia and graph.name == 'M-n101-k10':
 
