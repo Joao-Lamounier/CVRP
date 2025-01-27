@@ -1,11 +1,4 @@
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-
 import random
-import math
-import numpy as np
-
 from local_search.ThreeOpt import ThreeOpt
 
 
@@ -85,6 +78,5 @@ class Grasph:
             if cost < self.best_cost:
                 self.best_solution = solution
                 self.best_cost = cost
-
 
         return self.best_solution, self.best_cost

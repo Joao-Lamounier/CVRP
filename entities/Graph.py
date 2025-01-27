@@ -2,6 +2,9 @@ import math
 import numpy as np
 import os
 import re
+from time import perf_counter
+
+from metaheuristics.GeneticAlgorithm import GeneticAlgorithm
 
 
 class Graph:
@@ -15,10 +18,10 @@ class Graph:
         self.capacity = int(capacity)
         self.node_list = node_list
         self.demands = demands
-        self.depot = depot
+        self.depot = depot - 1
         self.graph = np.zeros((self.dimension, self.dimension))
         self.arcs = int((dimension * dimension - dimension) / 2)
-        self.vehicles = re.search(r'k(\d+)', name)[1]
+        self.vehicles = int(re.search(r'k(\d+)', name)[1])
         self.optimal_solution, self.optimal_routes = Graph.load_optimal_solution(file_solution)
 
         # Calcula a matriz de distâncias
@@ -80,7 +83,7 @@ class Graph:
                         node_list.append((node_id, x, y))
 
                     elif current_section == "demands" and len(parts) == 2:
-                        node_id = int(parts[0])
+                        node_id = int(parts[0]) - 1
                         demand = int(parts[1])
                         demands[node_id] = demand
 
@@ -99,7 +102,7 @@ class Graph:
             lines = f.readlines()
             for line in lines:
                 if line.startswith("Cost"):
-                    cost = line.split()[1].strip()
+                    cost = float(line.split()[1].strip())
                 elif line.startswith("Route"):
                     route = line.split(":")[1].split()
                     new_route = []
@@ -112,19 +115,35 @@ class Graph:
     def euclidean_2d_calc(node1, node2):
         x = node1[1] - node2[1]
         y = node1[2] - node2[2]
-        return math.sqrt(x * x + y * y)
+        return round(math.sqrt(x * x + y * y))
+
+    def calculate_fitness(self, routes):
+        total_distance = 0.0
+
+        for route in routes:
+            route_distance = 0.0
+            previous = self.depot
+
+            for client in route:
+                route_distance += self.graph[previous][client]
+                previous = client
+
+            route_distance += self.graph[previous][self.depot]
+            total_distance += route_distance
+
+        return total_distance
 
     def calculate_distance(self):
         total_distance = 0.0
 
         for i in range(len(self.optimal_routes)):
             route = self.optimal_routes[i]
-            total_distance += self.graph[self.depot - 1][route[0]]
+            total_distance += self.graph[self.depot][route[0]]
             for j in range(len(self.optimal_routes[i]) - 1):
                 total_distance += self.graph[route[j]][route[j + 1]]
-            total_distance += self.graph[route[-1]][self.depot - 1]
+            total_distance += self.graph[route[-1]][self.depot]
 
-        return total_distance
+        return float(total_distance)
 
     def get_demand(self, node_id):
         """Retorna a demanda para um determinado nó"""
@@ -155,7 +174,39 @@ if __name__ == '__main__':
     folder = '../files/instances/'
     file_list = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith('.vrp')]
 
+    artigo_instancia = ['P-n16-k8', 'P-n19-k2', 'P-n20-k2', 'P-n22-k8', 'M-n101-k10', 'P-n40-k5', 'P-n51-k10']
+
+    nomes = [
+        "A-n32-k5", "A-n39-k5", "A-n55-k9", "A-n80-k10", "B-n44-k7", "B-n63-k10",
+        "M-n121-k7", "P-n40-k5", "P-n60-k10", "X-n115-k10", "A-n33-k5", "A-n39-k6",
+        "A-n60-k9", "B-n31-k5", "B-n45-k5", "B-n64-k9", "M-n151-k12", "P-n45-k5",
+        "P-n60-k15", "X-n120-k6", "A-n33-k6", "A-n44-k6", "A-n62-k8", "B-n34-k5",
+        "B-n45-k6", "B-n66-k9", "P-n101-k4", "P-n50-k10", "P-n65-k10", "X-n129-k18",
+        "A-n34-k5", "A-n45-k7", "A-n63-k10", "B-n35-k5", "B-n50-k7", "B-n67-k10",
+        "P-n16-k8", "P-n50-k7", "P-n70-k10", "X-n134-k13", "A-n36-k5", "A-n46-k7",
+        "A-n63-k9", "B-n38-k6", "B-n51-k7", "B-n68-k9", "P-n19-k2", "P-n51-k10",
+        "P-n76-k4", "X-n139-k10", "A-n37-k5", "A-n48-k7", "A-n64-k9", "B-n39-k5",
+        "B-n52-k7", "B-n78-k10", "P-n20-k2", "P-n55-k10", "P-n76-k5", "X-n143-k7",
+        "A-n37-k6", "A-n53-k7", "A-n65-k9", "B-n41-k6", "B-n56-k7", "F-n72-k4",
+        "P-n21-k2", "P-n55-k7", "X-n106-k14", "A-n38-k5", "A-n54-k7", "A-n69-k9",
+        "B-n43-k6", "B-n57-k9", "M-n101-k10", "P-n22-k2", "P-n55-k8", "X-n110-k13"
+    ]
+
+    route_teste = [[1, 10, 8, 16, 17, 3, 12, 14, 11, 4], [6, 2, 7, 9, 15, 13, 5, 18]]
+
     for file in file_list:
         graph = Graph.load_graph(file)
+        GA = GeneticAlgorithm(graph)
 
-        print(graph.name, graph.problem_type, graph.optimal_solution, graph.calculate_distance())
+        if graph.name in nomes: # graph.optimal_solution == graph.calculate_fitness(graph.optimal_routes) and graph.name not in ['P-n55-k15', 'X-n101-k25', 'X-n125-k30', 'X-n148-k46'] and graph.name in artigo_instancia and graph.name == 'M-n101-k10':
+
+            begin = perf_counter()
+            GA.genetic_algorithm()
+            end = perf_counter()
+
+            print(f'NAME: {graph.name} OPTIMAL_SOLUTION: {graph.optimal_solution} '
+                  f' OBJECTIVE FUNCTION: {GA.objetive_function} '
+                  f' GAP: {100*((GA.objetive_function - graph.optimal_solution)/graph.optimal_solution)} '
+                  f' ROUTES: {len(GA.routes)} '
+                  f' RUN_TIME: {end - begin}'
+                  f'Routes {GA.routes}')
