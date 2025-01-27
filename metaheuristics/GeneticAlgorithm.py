@@ -6,6 +6,7 @@ class GeneticAlgorithm:
     def __init__(self, cvrp, elitism_rate, mutation_rate, num_generations):
         self.cvrp = cvrp
         self.objective_function, self.routes = float('inf'), []
+        self.run_time = 0.0
         self.population_size = 500 * (self.cvrp.dimension - 1)
         self.elitism_rate = elitism_rate
         self.mutation_rate = mutation_rate
@@ -60,17 +61,20 @@ class GeneticAlgorithm:
 
         return total_distance
 
-    def crossover(self, parent_1, parent_2):
+    @staticmethod
+    def crossover(parent_1, parent_2):
+        # Operador PMX - Partially Mapped Crossover
         cut = random.randint(1, len(parent_1) - 1)
         child = parent_1[:cut] + [c for c in parent_2 if c not in parent_1[:cut]]
         return child
 
     def mutate(self, individual):
+        # Operador Reverse
         if random.random() < self.mutation_rate:
             idx1, idx2 = random.sample(range(len(individual)), 2)
             individual[idx1:idx2 + 1] = individual[idx1:idx2 + 1][::-1]
 
-    def genetic_algorithm(self):
+    def solve_genetic_algorithm(self):
         # Inicialização da população
         population = [self.create_individual() for _ in range(self.population_size)]
         fitness_scores = []
@@ -93,7 +97,7 @@ class GeneticAlgorithm:
             # Geração da nova população
             while len(new_population) < self.population_size:
                 parent_1, parent_2 = random.sample(population, 2)
-                child = self.crossover(parent_1, parent_2)
+                child = GeneticAlgorithm.crossover(parent_1, parent_2)
                 self.mutate(child)
                 new_population.append(child)
 

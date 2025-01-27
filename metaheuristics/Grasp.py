@@ -3,9 +3,10 @@ from local_search.ThreeOpt import ThreeOpt
 
 
 class Grasp:
-    def __init__(self, cvrp, alpha=0.125, max_iter=1000):
+    def __init__(self, cvrp, max_iter, alpha):
         self.cvrp = cvrp
         self.objective_function, self.routes = float('inf'), []
+        self.run_time = 0.0
         self.alpha = alpha
         self.max_iter = max_iter
 
@@ -71,8 +72,7 @@ class Grasp:
             min_cost = candidates[0][1]
             max_cost = candidates[-1][1]
 
-            rcl = [node for node, cost in candidates
-                   if cost <= min_cost + self.alpha * (max_cost - min_cost)]
+            rcl = [node for node, cost in candidates if cost <= min_cost + self.alpha * (max_cost - min_cost)]
 
             selected_node = random.choice(rcl)
             solution.append(selected_node)

@@ -22,7 +22,7 @@ class CVRP:
                 self.graph[i, j] = CVRP.euclidean_2d_calc(self.node_list[i], self.node_list[j])
 
     @staticmethod
-    def load_graph(file_path):
+    def load_cvrp(file_path):
         node_list, demands = [], {}
 
         with open(file_path, 'r') as file:
@@ -52,7 +52,7 @@ class CVRP:
                 elif line.startswith("CAPACITY"):
                     capacity = int(line.split(":")[1].strip())
 
-                # Controle de seções
+                # Seções do Arquivo: Coordenadas, Demandas e Depósito
                 elif line == "NODE_COORD_SECTION":
                     current_section = "coordinates"
                 elif line == "DEMAND_SECTION":
@@ -82,7 +82,7 @@ class CVRP:
                             depot = depot_id
 
         return CVRP(name, comment, problem_type, dimension, edge_weight_type, capacity,
-                    node_list, demands, depot, '../files/optimal_solutions/' + name + '.sol')
+                    node_list, demands, depot, 'files/optimal_solutions/' + name + '.sol')
 
     @staticmethod
     def load_optimal_solution(file_path):
