@@ -4,7 +4,8 @@ import os
 import re
 from time import perf_counter
 
-from metaheuristics.GeneticAlgorithm import GeneticAlgorithm
+# from metaheuristics.GeneticAlgorithm import GeneticAlgorithm
+from metaheuristics.Grasph import Grasph
 
 
 class Graph:
@@ -177,36 +178,27 @@ if __name__ == '__main__':
     artigo_instancia = ['P-n16-k8', 'P-n19-k2', 'P-n20-k2', 'P-n22-k8', 'M-n101-k10', 'P-n40-k5', 'P-n51-k10']
 
     nomes = [
-        "A-n32-k5", "A-n39-k5", "A-n55-k9", "A-n80-k10", "B-n44-k7", "B-n63-k10",
-        "M-n121-k7", "P-n40-k5", "P-n60-k10", "X-n115-k10", "A-n33-k5", "A-n39-k6",
-        "A-n60-k9", "B-n31-k5", "B-n45-k5", "B-n64-k9", "M-n151-k12", "P-n45-k5",
-        "P-n60-k15", "X-n120-k6", "A-n33-k6", "A-n44-k6", "A-n62-k8", "B-n34-k5",
-        "B-n45-k6", "B-n66-k9", "P-n101-k4", "P-n50-k10", "P-n65-k10", "X-n129-k18",
-        "A-n34-k5", "A-n45-k7", "A-n63-k10", "B-n35-k5", "B-n50-k7", "B-n67-k10",
-        "P-n16-k8", "P-n50-k7", "P-n70-k10", "X-n134-k13", "A-n36-k5", "A-n46-k7",
-        "A-n63-k9", "B-n38-k6", "B-n51-k7", "B-n68-k9", "P-n19-k2", "P-n51-k10",
-        "P-n76-k4", "X-n139-k10", "A-n37-k5", "A-n48-k7", "A-n64-k9", "B-n39-k5",
-        "B-n52-k7", "B-n78-k10", "P-n20-k2", "P-n55-k10", "P-n76-k5", "X-n143-k7",
-        "A-n37-k6", "A-n53-k7", "A-n65-k9", "B-n41-k6", "B-n56-k7", "F-n72-k4",
-        "P-n21-k2", "P-n55-k7", "X-n106-k14", "A-n38-k5", "A-n54-k7", "A-n69-k9",
-        "B-n43-k6", "B-n57-k9", "M-n101-k10", "P-n22-k2", "P-n55-k8", "X-n110-k13"
-    ]
+         'A-n32-k5', 'A-n33-k5', 'A-n37-k6', 'A-n44-k6', 'A-n60-k9', 'A-n62-k8', 'A-n64-k9', 'A-n65-k9', 'A-n69-k9', 'A-n80-k10',
+         'B-n38-k6', 'B-n43-k6', 'B-n51-k7', 'B-n56-k7', 'B-n66-k9', 'B-n68-k9', 'B-n78-k10',
+         'F-n72-k4',
+         'M-n101-k10', 'M-n121-k7',
+         'P-n16-k8', 'P-n19-k2', 'P-n20-k2', 'P-n21-k2', 'P-n22-k8', 'P-n40-k5', 'P-n51-k10', 'P-n101-k4',
+         'X-n106-k14', 'X-n110-k13'
+]
 
     route_teste = [[1, 10, 8, 16, 17, 3, 12, 14, 11, 4], [6, 2, 7, 9, 15, 13, 5, 18]]
 
     for file in file_list:
         graph = Graph.load_graph(file)
-        GA = GeneticAlgorithm(graph)
+        grasp = Grasph(graph, graph.depot)
 
         if graph.name in nomes: # graph.optimal_solution == graph.calculate_fitness(graph.optimal_routes) and graph.name not in ['P-n55-k15', 'X-n101-k25', 'X-n125-k30', 'X-n148-k46'] and graph.name in artigo_instancia and graph.name == 'M-n101-k10':
 
             begin = perf_counter()
-            GA.genetic_algorithm()
+            grasp.run()
             end = perf_counter()
 
             print(f'NAME: {graph.name} OPTIMAL_SOLUTION: {graph.optimal_solution} '
-                  f' OBJECTIVE FUNCTION: {GA.objetive_function} '
-                  f' GAP: {100*((GA.objetive_function - graph.optimal_solution)/graph.optimal_solution)} '
-                  f' ROUTES: {len(GA.routes)} '
-                  f' RUN_TIME: {end - begin}'
-                  f'Routes {GA.routes}')
+                  f' OBJECTIVE FUNCTION: {grasp.best_cost} '
+                  f' GAP: {100*((grasp.best_cost - graph.optimal_solution)/graph.optimal_solution)} '
+                  f' RUN_TIME: {end - begin}')
